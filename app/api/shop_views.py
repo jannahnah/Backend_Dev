@@ -1,28 +1,74 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from .models import Product, Cart, CartItem, Checkout
-from .serializers import ProductSerializer, CartSerializer, CheckoutSerializer
+# shop/views.py
+import json
+from django.http import JsonResponse
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from .models import Product, Cart, CartItem, Checkout, CheckoutItem
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductView(View):
+    def get(self, request):
+        products = list(Product.objects.values())
+        return JsonResponse(products, safe=False)
 
-class CartViewSet(viewsets.ViewSet):
-    def list(self, request):
-        cart = Cart.objects.get(user_id=request.user.id)
-        serializer = CartSerializer(cart)
-        return Response(serializer.data)
+@method_decorator(csrf_exempt, name='dispatch')
+class CartView(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        product_id = data.get('product_id')
+        quantity = data.get('quantity', 1)
 
-    def create(self, request):
-        cart = Cart.objects.get(user_id=request.user.id)
-        product = Product.objects.get(id=request.data['product_id'])
-        quantity = request.data['quantity']
-        cart_item = CartItem.objects.create(cart=cart, product=product, quantity=quantity)
-        return Response({'message': 'Product added to cart'})
+        # Get or create a cart for the user
+        cart, created = Cart.objects.get_or_create(user_id=user_id)
 
-class CheckoutViewSet(viewsets.ViewSet):
-    def create(self, request):
-        cart = Cart.objects.get(user_id=request.user.id)
-        total_price = sum(item.product.price * item.quantity for item in cart.cartitem_set.all())
-        checkout = Checkout.objects.create(cart=cart, total_price=total_price)
-        return Response({'message': 'Checkout successful', 'total_price': total_price})
+        # Add product to cart
+        product = Product.objects.get(product_id=product_id)
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        cart_item.quantity += quantity
+        cart_item.save()
+
+        return JsonResponse({'message': 'Product added to cart'}, status=201)
+
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+        cart = Cart.objects.filter(user_id=user_id).first()
+        if not cart:
+            return JsonResponse({'message': 'Cart not found'}, status=404)
+
+        items = list(cart.items.values('product__name', 'product__price', 'quantity'))
+        return JsonResponse(items, safe=False)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CheckoutView(View):
+    def post(self, request):
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        cart = Cart.objects.filter(user_id=user_id).first()
+        if not cart:
+            return JsonResponse({'message': 'Cart not found'}, status=404)
+
+        total_amount = 0
+        checkout_items = []
+
+        for item in cart.items.all():
+            subtotal = item.product.price * item.quantity
+            total_amount += subtotal
+            checkout_items.append({
+                'product_id': item.product.product_id,
+                'quantity': item.quantity,
+                'subtotal': subtotal
+            })
+
+        checkout = Checkout.objects.create(user_id=user_id, total_amount=total_amount, payment_status='Pending')
+
+        for checkout_item in checkout_items:
+            CheckoutItem.objects.create(
+                checkout=checkout,
+                product_id=checkout_item['product_id'],
+                quantity=checkout_item['quantity'],
+                subtotal=checkout_item['subtotal']
+            )
+
+        return JsonResponse({'message': 'Checkout successful', 'total_amount': total_amount}, status=201)

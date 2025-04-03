@@ -11,3 +11,12 @@
  "chat_message": "Hello, this is a chat test!”
 }
 
+{
+ "product_id": 1,
+ "name": "Lightweight Running Shoes",
+ "description": "Comfortable and breathable running shoes.",
+ "price": 59.99,
+ "stock": 100,
+ "image_url": "http://example.com/images/running_shoes.jpg",
+ "category_id": 1
+},

@@ -1,12 +1,9 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import ProductViewSet, CartViewSet, CheckoutViewSet
-
-router = DefaultRouter()
-router.register(r'products', ProductViewSet)
-router.register(r'cart', CartViewSet, basename='cart')
-router.register(r'checkout', CheckoutViewSet, basename='checkout')
+# shop/urls.py
+from django.urls import path
+from .views import ProductView, CartView, CheckoutView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('products/', ProductView.as_view(), name='product-list'),
+    path('cart/', CartView.as_view(), name='cart'),
+    path('checkout/', CheckoutView.as_view(), name='checkout'),
 ]
