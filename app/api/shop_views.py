@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from ..shop.models import Product, Cart, CartItem, Checkout, CheckoutItem
+from .shop_models import Product, Cart, CartItem, Checkout, CheckoutItem
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductView(View):
