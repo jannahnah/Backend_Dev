@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'api',
-    'corsheaders',
+    'corsheaders', # Ensure this is the correct name of your app
 ]
 
 MIDDLEWARE = [
@@ -139,5 +139,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_FAILURE_VIEW = "your_app_name.views.custom_csrf_failure_view"
+#CSRF_FAILURE_VIEW = "your_app_name.views.custom_csrf_failure_view"
 

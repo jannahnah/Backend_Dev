@@ -12,8 +12,7 @@
 }
 
 {
-  "message": "Product created successfully",
-  "product_id": 1,
-  "name": "New Product",
-  "price": "19.99"
+    "name": "Test Product",
+    "description": "A sample product",
+    "price": 29.99
 }
